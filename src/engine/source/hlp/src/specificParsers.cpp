@@ -41,7 +41,6 @@ static const std::unordered_map<std::string_view, std::tuple<const char*, const 
 
 bool configureTsParser(Parser& parser, std::vector<std::string_view> const& args)
 {
-    std::cout << "configureTsParser" << std::endl;
     auto it = kTimeStampFormatMapper.find(args[0]);
     if (it != kTimeStampFormatMapper.end())
     {
@@ -330,7 +329,6 @@ static bool parseFormattedTime(std::string const& fmt,
                                ParseResult& result,
                                std::string const& name)
 {
-    std::cout << "FormattedTime GOT: " << time << std::endl;
     std::stringstream ss {time};
     // check in which cases this could be necessary
     // ss.imbue(std::locale("en_US.UTF-8"));
@@ -389,7 +387,7 @@ static bool parseFormattedTime(std::string const& fmt,
         // }
         return true;
     }
-    std::cout << "HERE FAIL: " << ss.str() << std::endl;
+
     return false;
 }
 
@@ -399,13 +397,12 @@ bool parseTimeStamp(const char** it, Parser const& parser, ParseResult& result)
     {
         // TODO: move to configureTsParser
         auto tsName = parser.options[0];
-        std::cout << "Parsing timestamp name: " << tsName << std::endl;
+
         std::string tsExample = std::get<1>(kTimeStampFormatMapper.at(tsName));
         auto tsSize = tsExample.size();
-        std::cout << "Parsing timestamp example: " << tsExample << std::endl;
-        std::cout << "Parsing timestamp size: " << tsSize << std::endl;
+
         auto tsFormat = std::get<0>(kTimeStampFormatMapper.at(tsName));
-        std::cout << "Parsing timestamp format: " << tsFormat << std::endl;
+
         const char* start = *it;
         for (auto i = 0; i < tsSize; i++, (*it)++)
         {
@@ -414,9 +411,9 @@ bool parseTimeStamp(const char** it, Parser const& parser, ParseResult& result)
                 return false;
             }
         }
-        std::cout << "Pointer after timestamp: " << *it << std::endl;
+
         std::string tsStr {start, tsSize};
-        std::cout << "Parsing timestamp string: \"" << tsStr << "\"" << std::endl;
+
 
         // TODO assert options?
         return parseFormattedTime(tsFormat, tsStr, result, parser.name);
