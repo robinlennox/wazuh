@@ -132,19 +132,17 @@ TEST_F(RSyncImplementationTest, ValidDecoderPushedChecksumFail)
 
     auto mockDbSync { std::make_shared<MockDBSync>() };
 
-    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const cJSON*, callback_data_t callback_data)
+    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["count_field"] = 1;
-        (*callback)(json);
-    })).WillOnce(testing::Invoke([](const cJSON*, callback_data_t callback_data)
+        callbackData(ReturnTypeCallback::GENERIC, json);
+    })).WillOnce(testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["test_index_field"] = "11";
         json["test field"] = "test";
-        (*callback)(json);
+        callbackData(ReturnTypeCallback::GENERIC, json);
     }));
 
     const auto callbackWrapper
@@ -225,28 +223,25 @@ TEST_F(RSyncImplementationTest, ValidDecoderPushedChecksumFailToSplit)
 
     auto mockDbSync { std::make_shared<MockDBSync>() };
 
-    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const cJSON*, callback_data_t callback_data)
+    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["count_field"] = 2;
-        (*callback)(json);
-    })).WillOnce(testing::DoAll(testing::Invoke([](const cJSON*, callback_data_t callback_data)
+        callbackData(ReturnTypeCallback::GENERIC, json);
+    })).WillOnce(testing::DoAll(testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["test_index_field"] = "1";
         json["test_last_event_field"] = "22";
         json["checksum"] = "aecf1235445354";
-        (*callback)(json);
-    }), testing::Invoke([](const cJSON*, callback_data_t callback_data)
+        callbackData(ReturnTypeCallback::GENERIC, json);
+    }), testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["test_index_field"] = "2";
         json["test_last_event_field"] = "23";
         json["checksum"] = "aecf1235445354";
-        (*callback)(json);
+        callbackData(ReturnTypeCallback::GENERIC, json);
     })));
 
     std::atomic<uint64_t> messageCounter { 0 };
@@ -385,12 +380,11 @@ TEST_F(RSyncImplementationTest, ValidDecoderPushedChecksumNoData)
 
     auto mockDbSync { std::make_shared<MockDBSync>() };
 
-    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const cJSON*, callback_data_t callback_data)
+    EXPECT_CALL(*mockDbSync, select(_, _)).WillOnce(testing::Invoke([](const nlohmann::json&, ResultCallbackData callbackData)
     {
-        std::function<void(const nlohmann::json&)>* callback { static_cast<std::function<void(const nlohmann::json&)>*>(callback_data.user_data) };
         nlohmann::json json;
         json["count_field"] = 0;
-        (*callback)(json);
+        callbackData(ReturnTypeCallback::GENERIC, json);
     }));
 
     EXPECT_NO_THROW(RSync::RSyncImplementation::instance().registerSyncId(handle, "test_id", mockDbSync, nlohmann::json::parse(config), nullptr));

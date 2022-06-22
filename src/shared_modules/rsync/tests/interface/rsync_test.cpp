@@ -488,6 +488,7 @@ TEST_F(RSyncTest, RegisterAndPush)
     std::string buffer3{R"(test_id no_data {"begin":"/boot/grub2/fonts/unicode.pf2","end":"/boot/grub2/i386-pc/gzio.mod","id":1})"};
     ASSERT_EQ(0, rsync_push_message(handle_rsync, reinterpret_cast<const void*>(buffer3.data()), buffer3.size()));
 
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     EXPECT_EQ(0, rsync_close(handle_rsync));
 
     dbsync_teardown();
@@ -684,7 +685,7 @@ TEST_F(RSyncTest, RegisterAndPushCPP)
     std::string buffer3{R"(test_id no_data {"begin":"/boot/grub2/fonts/unicode.pf2","end":"/boot/grub2/i386-pc/gzio.mod","id":1})"};
     ASSERT_NO_THROW(remoteSync->pushMessage({ buffer3.begin(), buffer3.end() }));
 
-    //sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     remoteSync.reset();
 }
 

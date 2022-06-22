@@ -24,7 +24,7 @@ class MockDBSync : public RSync::DBSyncWrapper
 
         MOCK_METHOD(void,
                     select,
-                    (const cJSON*, callback_data_t),
+                    (const nlohmann::json&, ResultCallbackData),
                     (override));
 
 };
