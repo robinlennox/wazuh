@@ -167,11 +167,13 @@ int wdbi_checksum_range(wdb_t * wdb, wdb_component_t component, const char * beg
 
     assert(component < sizeof(INDEXES) / sizeof(int));
 
-    if (wdb_stmt_cache(wdb, INDEXES[component]) == -1) {
-        return -1;
+    if (wdb_stmt_cache(wdb, INDEXES[component]) == OS_INVALID) {
+        mdebug1("Cannot cache statement");
+        return OS_INVALID;
     }
 
-    sqlite3_stmt * stmt = wdb->stmt[INDEXES[component]];
+    sqlite3_stmt *stmt =   wdb->stmt[INDEXES[component]];
+
     sqlite3_bind_text(stmt, 1, begin, -1, NULL);
     sqlite3_bind_text(stmt, 2, end, -1, NULL);
 
@@ -320,7 +322,9 @@ void wdbi_set_last_completion(wdb_t * wdb, wdb_component_t component, long times
 // Query the checksum of a data range
 integrity_sync_status_t wdbi_query_checksum(wdb_t * wdb, wdb_component_t component, dbsync_msg action, const char * payload) {
     integrity_sync_status_t status = INTEGRITY_SYNC_ERR;
-
+    if (component == WDB_SYSCOLLECTOR_PACKAGES) {
+        minfo("PAYLOAD: %s", payload);
+    }
     // Parse payloadchecksum
     cJSON * data = cJSON_Parse(payload);
     if (data == NULL) {
@@ -355,9 +359,15 @@ integrity_sync_status_t wdbi_query_checksum(wdb_t * wdb, wdb_component_t compone
     os_sha1 manager_checksum = {0};
     // Get the previously computed manager checksum
     if (INTEGRITY_CHECK_GLOBAL == action) {
-        if (OS_SUCCESS == wdbi_get_last_manager_checksum(wdb, component, manager_checksum) && 0 == strcmp(manager_checksum, checksum)) {
-            mdebug2("Agent '%s' %s range checksum avoided.", wdb->id, COMPONENT_NAMES[component]);
-            status = INTEGRITY_SYNC_CKS_OK;
+        if (OS_SUCCESS == wdbi_get_last_manager_checksum(wdb, component, manager_checksum)) {
+            if (!strcmp(manager_checksum, checksum)) {
+                mdebug2("Agent '%s' %s range checksum avoided.", wdb->id, COMPONENT_NAMES[component]);
+                status = INTEGRITY_SYNC_CKS_OK;
+            } else {
+                wdbi_remove_duplicate_entries(wdb, component);
+            }
+        } else {
+            mdebug2("Agent '%s' %s range checksum couldn't not be obtained.", wdb->id, COMPONENT_NAMES[component]);
         }
     }
 
@@ -486,6 +496,34 @@ int wdbi_get_last_manager_checksum(wdb_t *wdb, wdb_component_t component, os_sha
 
     cJSON_Delete(j_sync_info);
     return result;
+}
+
+void wdbi_remove_duplicate_entries(wdb_t *wdb, wdb_component_t component) {
+    const int INDEXES[] = { [WDB_FIM] = WDB_STMT_FIM_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_FIM_FILE] = WDB_STMT_FIM_FILE_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_FIM_REGISTRY] = WDB_STMT_FIM_REGISTRY_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_PROCESSES] = WDB_STMT_SYSCOLLECTOR_PROCESSES_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_PACKAGES] = WDB_STMT_SYSCOLLECTOR_PACKAGES_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_HOTFIXES] = WDB_STMT_SYSCOLLECTOR_HOTFIXES_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_PORTS] = WDB_STMT_SYSCOLLECTOR_PORTS_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_NETPROTO] = WDB_STMT_SYSCOLLECTOR_NETPROTO_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_NETADDRESS] = WDB_STMT_SYSCOLLECTOR_NETADDRESS_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_NETINFO] = WDB_STMT_SYSCOLLECTOR_NETINFO_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_HWINFO] = WDB_STMT_SYSCOLLECTOR_HWINFO_REMOVE_DUPLICATE_ENTRIES,
+                            [WDB_SYSCOLLECTOR_OSINFO] = WDB_STMT_SYSCOLLECTOR_OSINFO_REMOVE_DUPLICATE_ENTRIES };
+
+    assert(component < sizeof(INDEXES) / sizeof(int));
+
+    if (wdb_stmt_cache(wdb, INDEXES[component]) == OS_INVALID) {
+        mdebug1("Cannot cache statement");
+        return;
+    }
+
+    sqlite3_stmt *stmt = wdb->stmt[INDEXES[component]];
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        mdebug1("DB(%s) sqlite3_step(): %s", wdb->id, sqlite3_errmsg(wdb->db));
+    }
 }
 
 // Calculates SHA1 hash from a NULL terminated string array

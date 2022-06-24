@@ -1348,6 +1348,7 @@ int wdb_parse_syscollector(wdb_t * wdb, const char * query, char * input, char *
     }
     else if (strcmp(query, "syscollector_packages") == 0)
     {
+        minfo("QUERY: %s", input);
         component = WDB_SYSCOLLECTOR_PACKAGES;
         mdebug2("DB(%s) syscollector_packages Syscollector query. ", wdb->id);
     }
