@@ -194,13 +194,13 @@ void test_send_msg_tcp_err(void ** state) {
 void test_send_msg_udp_ok(void ** state) {
     (void) state;
 
-    char *agent_id = "001";
-    char *msg = "abcdefghijk";
-    ssize_t msg_length = strlen(msg);
-    int key = 0;
+    const char *const agent_id = "001";
+    const char *const msg = "abcdefghijk";
+    const ssize_t msg_length = strlen(msg);
+    const int key = 0;
 
-    char *crypto_msg = "!@#123abc";
-    ssize_t crypto_size = strlen(crypto_msg);
+    const char *const crypto_msg = "!@#123abc";
+    const ssize_t crypto_size = strlen(crypto_msg);
     
     logr.global.agents_disconnection_time = 0;
     remoted_state.queued_msgs = 0;
