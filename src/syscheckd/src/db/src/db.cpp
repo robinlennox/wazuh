@@ -117,8 +117,9 @@ FIMDBErrorCode fim_db_init(int storage,
                            int sync_interval,
                            fim_sync_callback_t sync_callback,
                            logging_callback_t log_callback,
-                           int file_limit,
                            uint32_t min_sync_interval_time,
+                           long sync_thread_pool,
+                           int file_limit,
                            int value_limit,
                            bool sync_registry_enabled)
 {
@@ -217,8 +218,9 @@ FIMDBErrorCode fim_db_init(int storage,
                             callbackSyncFileWrapper,
                             callbackSyncRegistryWrapper,
                             callbackLogWrapper,
-                            file_limit,
                             min_sync_interval_time,
+                            sync_thread_pool,
+                            file_limit,
                             value_limit,
                             sync_registry_enabled);
         retVal = FIMDBErrorCode::FIMDB_OK;
